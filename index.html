@@ -1,0 +1,101 @@
+<html>
+  <head>
+      <meta charset="utf-8"/>
+  </head>
+  <body>
+    <button id="signInButton" disabled=true>Sign in</button>
+    <button id="signOutButton" disabled=true>Sign out</button>
+    Current user: <div id="current_user"></div>
+    <h1>Console</h1>
+    <pre id="output"></pre>
+    <h1>State of Health packets</h1>
+    <table id="soh_table">
+        <tr>
+            <!-- header -->
+            <th>packet_number</th>
+            <th>posix</th>
+            <th>edison_boot</th>
+            <th>edison_temp</th>
+            <th>total_irid_rx</th>
+            <th>total_irid_tx</th>
+            <th>total_zigb_rx</th>
+            <th>total_wifi_tx</th>
+            <th>total_pics</th>
+            <!-- gps_data -->
+            <th>time</th>
+            <th>px</th>
+            <th>py</th>
+            <th>pz</th>
+            <th>vx</th>
+            <th>vy</th>
+            <th>vz</th>
+            <!-- wsm_data -->
+            <th>raw_data</th>
+        </tr>
+    </table>
+    <h1>GPS packets</h1>
+    <table id="gps_table">
+        <tr>
+            <!-- header -->
+            <th>packet_number</th>
+            <th>posix</th>
+            <th>edison_boot</th>
+            <th>edison_temp</th>
+            <th>total_irid_rx</th>
+            <th>total_irid_tx</th>
+            <th>total_zigb_rx</th>
+            <th>total_wifi_tx</th>
+            <th>total_pics</th>
+            <!-- gps_data -->
+            <th>time</th>
+            <th>px</th>
+            <th>py</th>
+            <th>pz</th>
+            <th>vx</th>
+            <th>vy</th>
+            <th>vz</th>
+        </tr>
+    </table>
+    <h1>WSM packets</h1>
+    <table id="wsm_table">
+        <tr>
+            <!-- header -->
+            <th>packet_number</th>
+            <th>posix</th>
+            <th>edison_boot</th>
+            <th>edison_temp</th>
+            <th>total_irid_rx</th>
+            <th>total_irid_tx</th>
+            <th>total_zigb_rx</th>
+            <th>total_wifi_tx</th>
+            <th>total_pics</th>
+            <!-- wsm_data -->
+            <th>raw_data</th>
+        </tr>
+    </table>
+    <h1>Picture packets</h1>
+    <table id="picture_table">
+        <tr>
+            <!-- header -->
+            <th>packet_number</th>
+            <th>posix</th>
+            <th>edison_boot</th>
+            <th>edison_temp</th>
+            <th>total_irid_rx</th>
+            <th>total_irid_tx</th>
+            <th>total_zigb_rx</th>
+            <th>total_wifi_tx</th>
+            <th>total_pics</th>
+            <!-- picture -->
+            <th>pic_num</th>
+            <th>cam_num</th>
+            <th>pic_time</th>
+            <th>pic_chunk_count</th>
+            <th>pic_chunk_num</th>
+            <th>pic_chunk_data</th>
+        </tr>
+    </table>
+  </body>
+</html>
+<script src="https://apis.google.com/js/api.js"></script>
+<script src="dashboard.js"></script>
