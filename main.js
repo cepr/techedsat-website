@@ -6,6 +6,8 @@ var SohPacket = require('./SohPacket.js');
 var GpsPacket = require('./GpsPacket.js');
 var WsmPacket = require('./WsmPacket.js');
 var PicturePacket = require('./PicturePacket.js');
+var NodeCouchDb = require('node-couchdb');
+var Iridium = require('./Iridium.js');
 
 // Your Client ID can be retrieved from your project in the Google
 // Developer Console, https://console.developers.google.com
@@ -21,7 +23,11 @@ var picture_table = document.getElementById('picture_table');
 var sign_in_button = document.getElementById('signInButton');
 var sign_out_button = document.getElementById('signOutButton');
 
-
+var db = new NodeCouchDb({
+    host: 'cedric.cloudant.com',
+    protocol: 'https',
+    port: 443
+});
 
 sign_in_button.onclick = function() {
   gapi.auth2.getAuthInstance().signIn();
@@ -61,8 +67,159 @@ function onMessagesGetDone(resp) {
     return;
   }
 
+  function td(text) {
+    var td = document.createElement('td');
+    td.appendChild(document.createTextNode(text));
+    return td;
+  }
+
+  function onAttachmentsGetDone(resp) {
+    var data = base64url.toBuffer(resp.data);
+    var header = Header.unpack(data, 0);
+    if (header.msg_type == Header.MSG_TYP_SOH) {
+      var p = SohPacket;
+      var unpacked = p.unpack(data, 0);
+      // Save in database
+      db.insert("techedsat5", {
+        "_id": 'iridium_' + iridium_metadata.packet_number,
+        "iridium_metadata": iridium_metadata,
+        "header": header,
+        "Soh": unpacked
+      }).then(({data, headers, status}) => {
+        // data is json response 
+        // headers is an object with all response headers 
+        // status is statusCode number
+      }, err => {
+        // either request error occured 
+        // ...or err.code=EDOCCONFLICT if document with the same id already exists 
+      });
+      var row = document.createElement('tr');
+      row.appendChild(td(unpacked.header.packet_number));
+      row.appendChild(td(unpacked.header.posix));
+      row.appendChild(td(unpacked.header.edison_boot));
+      row.appendChild(td(unpacked.header.edison_temp));
+      row.appendChild(td(unpacked.header.total_irid_rx));
+      row.appendChild(td(unpacked.header.total_irid_tx));
+      row.appendChild(td(unpacked.header.total_zigb_rx));
+      row.appendChild(td(unpacked.header.total_wifi_tx));
+      row.appendChild(td(unpacked.header.total_pics));
+      row.appendChild(td(unpacked.gps_data.time));
+      row.appendChild(td(unpacked.gps_data.px));
+      row.appendChild(td(unpacked.gps_data.py));
+      row.appendChild(td(unpacked.gps_data.pz));
+      row.appendChild(td(unpacked.gps_data.vx));
+      row.appendChild(td(unpacked.gps_data.vy));
+      row.appendChild(td(unpacked.gps_data.vz));
+      row.appendChild(td(unpacked.wsm_data.raw_data.toString('hex')));
+      soh_table.appendChild(row);
+    } else if (header.msg_type == Header.MSG_TYP_GPS) {
+      var p = GpsPacket;
+      var unpacked = p.unpack(data, 0);
+      // Save in database
+      db.insert("techedsat5", {
+        "_id": 'db_' + header.packet_number,
+        "iridium_metadata": iridium_metadata,
+        "header": header,
+        "Soh": unpacked
+      }).then(({data, headers, status}) => {
+        // data is json response 
+        // headers is an object with all response headers 
+        // status is statusCode number
+      }, err => {
+        // either request error occured 
+        // ...or err.code=EDOCCONFLICT if document with the same id already exists 
+      });
+      var row = document.createElement('tr');
+      row.appendChild(td(unpacked.header.packet_number));
+      row.appendChild(td(unpacked.header.posix));
+      row.appendChild(td(unpacked.header.edison_boot));
+      row.appendChild(td(unpacked.header.edison_temp));
+      row.appendChild(td(unpacked.header.total_irid_rx));
+      row.appendChild(td(unpacked.header.total_irid_tx));
+      row.appendChild(td(unpacked.header.total_zigb_rx));
+      row.appendChild(td(unpacked.header.total_wifi_tx));
+      row.appendChild(td(unpacked.header.total_pics));
+      row.appendChild(td(unpacked.data.time));
+      row.appendChild(td(unpacked.data.px));
+      row.appendChild(td(unpacked.data.py));
+      row.appendChild(td(unpacked.data.pz));
+      row.appendChild(td(unpacked.data.vx));
+      row.appendChild(td(unpacked.data.vy));
+      row.appendChild(td(unpacked.data.vz));
+      gps_table.appendChild(row);
+    } else if (header.msg_type == Header.MSG_TYP_WSM) {
+      var p = WsmPacket;
+      var unpacked = p.unpack(data, 0);
+      // Save in database
+      db.insert("techedsat5", {
+        "_id": 'db_' + header.packet_number,
+        "iridium_metadata": iridium_metadata,
+        "header": header,
+        "Soh": unpacked
+      }).then(({data, headers, status}) => {
+        // data is json response 
+        // headers is an object with all response headers 
+        // status is statusCode number
+      }, err => {
+        // either request error occured 
+        // ...or err.code=EDOCCONFLICT if document with the same id already exists 
+      });
+      var row = document.createElement('tr');
+      row.appendChild(td(unpacked.header.packet_number));
+      row.appendChild(td(unpacked.header.posix));
+      row.appendChild(td(unpacked.header.edison_boot));
+      row.appendChild(td(unpacked.header.edison_temp));
+      row.appendChild(td(unpacked.header.total_irid_rx));
+      row.appendChild(td(unpacked.header.total_irid_tx));
+      row.appendChild(td(unpacked.header.total_zigb_rx));
+      row.appendChild(td(unpacked.header.total_wifi_tx));
+      row.appendChild(td(unpacked.header.total_pics));
+      row.appendChild(td(unpacked.data.raw_data.toString('hex')));
+      wsm_table.appendChild(row);
+    } else if (header.msg_type == Header.MSG_TYP_PIC) {
+      var p = PicturePacket;
+      var unpacked = p.unpack(data, 0);
+      // Save in database
+      db.insert("techedsat5", {
+        "_id": 'db_' + header.packet_number,
+        "iridium_metadata": iridium_metadata,
+        "header": header,
+        "Soh": unpacked
+      }).then(({data, headers, status}) => {
+        // data is json response 
+        // headers is an object with all response headers 
+        // status is statusCode number
+      }, err => {
+        // either request error occured 
+        // ...or err.code=EDOCCONFLICT if document with the same id already exists 
+      });
+      var row = document.createElement('tr');
+      row.appendChild(td(unpacked.header.packet_number));
+      row.appendChild(td(unpacked.header.posix));
+      row.appendChild(td(unpacked.header.edison_boot));
+      row.appendChild(td(unpacked.header.edison_temp));
+      row.appendChild(td(unpacked.header.total_irid_rx));
+      row.appendChild(td(unpacked.header.total_irid_tx));
+      row.appendChild(td(unpacked.header.total_zigb_rx));
+      row.appendChild(td(unpacked.header.total_wifi_tx));
+      row.appendChild(td(unpacked.header.total_pics));
+      row.appendChild(td(unpacked.pic_num));
+      row.appendChild(td(unpacked.cam_num));
+      row.appendChild(td(unpacked.pic_time));
+      row.appendChild(td(unpacked.pic_chunk_count));
+      row.appendChild(td(unpacked.pic_chunk_num));
+      row.appendChild(td(unpacked.pic_chunk_data.toString('hex')));
+      picture_table.appendChild(row);
+    } else {
+        // unknown packet type
+        appendPre('Unknown packet type: ' + header.msg_type);
+        return;
+    }
+  }
+
   // Decode the email
   var plain = base64url.decode(resp.payload.parts[0].body.data);
+  var iridium_metadata = Iridium.parse_metadata(plain);
 
   // Download the SBD attachment
   var request = gapi.client.gmail.users.messages.attachments.get({
@@ -71,99 +228,6 @@ function onMessagesGetDone(resp) {
     'id': resp.payload.parts[1].body.attachmentId
   });
   request.execute(onAttachmentsGetDone);
-}
-
-function td(text) {
-  var td = document.createElement('td');
-  td.appendChild(document.createTextNode(text));
-  return td;
-}
-
-function onAttachmentsGetDone(resp) {
-  var data = base64url.toBuffer(resp.data);
-  var header = Header.unpack(data, 0);
-  if (header.msg_type == Header.MSG_TYP_SOH) {
-    var p = SohPacket;
-    var unpacked = p.unpack(data, 0);
-    var row = document.createElement('tr');
-    row.appendChild(td(unpacked.header.packet_number));
-    row.appendChild(td(unpacked.header.posix));
-    row.appendChild(td(unpacked.header.edison_boot));
-    row.appendChild(td(unpacked.header.edison_temp));
-    row.appendChild(td(unpacked.header.total_irid_rx));
-    row.appendChild(td(unpacked.header.total_irid_tx));
-    row.appendChild(td(unpacked.header.total_zigb_rx));
-    row.appendChild(td(unpacked.header.total_wifi_tx));
-    row.appendChild(td(unpacked.header.total_pics));
-    row.appendChild(td(unpacked.gps_data.time));
-    row.appendChild(td(unpacked.gps_data.px));
-    row.appendChild(td(unpacked.gps_data.py));
-    row.appendChild(td(unpacked.gps_data.pz));
-    row.appendChild(td(unpacked.gps_data.vx));
-    row.appendChild(td(unpacked.gps_data.vy));
-    row.appendChild(td(unpacked.gps_data.vz));
-    row.appendChild(td(unpacked.wsm_data.raw_data.toString('hex')));
-    soh_table.appendChild(row);
-  } else if (header.msg_type == Header.MSG_TYP_GPS) {
-    var p = GpsPacket;
-    var unpacked = p.unpack(data, 0);
-    var row = document.createElement('tr');
-    row.appendChild(td(unpacked.header.packet_number));
-    row.appendChild(td(unpacked.header.posix));
-    row.appendChild(td(unpacked.header.edison_boot));
-    row.appendChild(td(unpacked.header.edison_temp));
-    row.appendChild(td(unpacked.header.total_irid_rx));
-    row.appendChild(td(unpacked.header.total_irid_tx));
-    row.appendChild(td(unpacked.header.total_zigb_rx));
-    row.appendChild(td(unpacked.header.total_wifi_tx));
-    row.appendChild(td(unpacked.header.total_pics));
-    row.appendChild(td(unpacked.data.time));
-    row.appendChild(td(unpacked.data.px));
-    row.appendChild(td(unpacked.data.py));
-    row.appendChild(td(unpacked.data.pz));
-    row.appendChild(td(unpacked.data.vx));
-    row.appendChild(td(unpacked.data.vy));
-    row.appendChild(td(unpacked.data.vz));
-    gps_table.appendChild(row);
-  } else if (header.msg_type == Header.MSG_TYP_WSM) {
-    var p = WsmPacket;
-    var unpacked = p.unpack(data, 0);
-    var row = document.createElement('tr');
-    row.appendChild(td(unpacked.header.packet_number));
-    row.appendChild(td(unpacked.header.posix));
-    row.appendChild(td(unpacked.header.edison_boot));
-    row.appendChild(td(unpacked.header.edison_temp));
-    row.appendChild(td(unpacked.header.total_irid_rx));
-    row.appendChild(td(unpacked.header.total_irid_tx));
-    row.appendChild(td(unpacked.header.total_zigb_rx));
-    row.appendChild(td(unpacked.header.total_wifi_tx));
-    row.appendChild(td(unpacked.header.total_pics));
-    row.appendChild(td(unpacked.data.raw_data.toString('hex')));
-    wsm_table.appendChild(row);
-  } else if (header.msg_type == Header.MSG_TYP_PIC) {
-    var p = PicturePacket;
-    var unpacked = p.unpack(data, 0);
-    row.appendChild(td(unpacked.header.packet_number));
-    row.appendChild(td(unpacked.header.posix));
-    row.appendChild(td(unpacked.header.edison_boot));
-    row.appendChild(td(unpacked.header.edison_temp));
-    row.appendChild(td(unpacked.header.total_irid_rx));
-    row.appendChild(td(unpacked.header.total_irid_tx));
-    row.appendChild(td(unpacked.header.total_zigb_rx));
-    row.appendChild(td(unpacked.header.total_wifi_tx));
-    row.appendChild(td(unpacked.header.total_pics));
-    row.appendChild(td(unpacked.data.pic_num));
-    row.appendChild(td(unpacked.data.cam_num));
-    row.appendChild(td(unpacked.data.pic_time));
-    row.appendChild(td(unpacked.data.pic_chunk_count));
-    row.appendChild(td(unpacked.data.pic_chunk_num));
-    row.appendChild(td(unpacked.data.pic_chunk_data.toString('hex')));
-    picture_table.appendChild(row);
-  } else {
-      // unknown packet type
-      appendPre('Unknown packet type: ' + header.msg_type);
-      return;
-  }
 }
 
 /**
